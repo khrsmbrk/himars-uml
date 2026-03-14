@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import './App.css'
+import QRScanner from './components/QRScanner'
+import GenerateSuratModal from './components/GenerateSuratModal'
+import ConfirmModal from './components/ConfirmModal'
+import SettingsModal from './components/SettingsModal'
+import { Settings, FileText, QrCode, LogOut } from 'lucide-react'
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbzxTOyourdeploymentid/exec'
 
@@ -8,110 +13,163 @@ function App() {
   const [formData, setFormData] = useState({
     nama: '',
     nim: '',
-    email: ''
+    email: '',
+  })
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showGenerateModal, setShowGenerateModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [scannedData, setScannedData] = useState<any>(null)
+  const [settings, setSettings] = useState({
+    apiKey: '',
+    spreadsheetId: ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setShowConfirmModal(true)
+  }
+
+  const handleConfirmedSubmit = async () => {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'addAnggota',
-          data: formData
-        })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       })
-      alert('Data berhasil disimpan!')
+      
       setFormData({ nama: '', nim: '', email: '' })
+      alert('Data berhasil dikirim!')
     } catch (error) {
-      alert('Terjadi kesalahan')
+      console.error('Error:', error)
+      alert('Gagal mengirim data')
+    }
+  }
+
+  const handleQRScan = (decodedText: string) => {
+    try {
+      const data = JSON.parse(decodedText)
+      setScannedData(data)
+      setFormData(data)
+    } catch (error) {
+      console.error('Invalid QR code data')
+    }
+  }
+
+  const renderContent = () => {
+    switch (activeMenu) {
+      case 'home':
+        return (
+          <div className="form-container">
+            <h2>Form Input Data</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Nama:</label>
+                <input
+                  type="text"
+                  value={formData.nama}
+                  onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>NIM:</label>
+                <input
+                  type="text"
+                  value={formData.nim}
+                  onChange={(e) => setFormData({ ...formData, nim: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email:</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <button type="submit" className="submit-btn">Submit</button>
+            </form>
+          </div>
+        )
+      case 'qrcode':
+        return <QRScanner onScan={handleQRScan} onClose={() => setActiveMenu('home')} />
+      default:
+        return null
     }
   }
 
   return (
     <div className="app">
-      <header>
+      <header className="header">
         <h1>HIMARS UML</h1>
-        <p>Himpunan Mahasiswa Program Studi Administrasi Rumah Sakit</p>
+        <div className="header-actions">
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="icon-btn"
+            title="Generate Surat"
+          >
+            <FileText className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="icon-btn"
+            title="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => alert('Logout')}
+            className="icon-btn"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </header>
-      
-      <nav>
-        <button onClick={() => setActiveMenu('home')}>Beranda</button>
-        <button onClick={() => setActiveMenu('anggota')}>Anggota</button>
-        <button onClick={() => setActiveMenu('aspirasi')}>Aspirasi</button>
-        <button onClick={() => setActiveMenu('presensi')}>Presensi</button>
-        <button onClick={() => setActiveMenu('evoting')}>E-Voting</button>
-        <button onClick={() => setActiveMenu('keuangan')}>Keuangan</button>
+
+      <nav className="nav-menu">
+        <button
+          className={activeMenu === 'home' ? 'active' : ''}
+          onClick={() => setActiveMenu('home')}
+        >
+          Home
+        </button>
+        <button
+          className={activeMenu === 'qrcode' ? 'active' : ''}
+          onClick={() => setActiveMenu('qrcode')}
+        >
+          <QrCode className="w-4 h-4 inline mr-1" />
+          QR Code Scanner
+        </button>
       </nav>
 
-      <main>
-        {activeMenu === 'home' && (
-          <div>
-            <h2>Selamat Datang di HIMARS UML</h2>
-            <p>Sistem Informasi Manajemen Organisasi</p>
-          </div>
-        )}
-
-        {activeMenu === 'anggota' && (
-          <div>
-            <h2>Pendaftaran Anggota</h2>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Nama Lengkap"
-                value={formData.nama}
-                onChange={(e) => setFormData({...formData, nama: e.target.value})}
-                required
-              />
-              <input
-                type="text"
-                placeholder="NIM"
-                value={formData.nim}
-                onChange={(e) => setFormData({...formData, nim: e.target.value})}
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                required
-              />
-              <button type="submit">Daftar</button>
-            </form>
-          </div>
-        )}
-
-        {activeMenu === 'aspirasi' && (
-          <div>
-            <h2>Kotak Aspirasi</h2>
-            <p>Fitur aspirasi akan segera hadir</p>
-          </div>
-        )}
-
-        {activeMenu === 'presensi' && (
-          <div>
-            <h2>Presensi QR Code</h2>
-            <p>Fitur presensi akan segera hadir</p>
-          </div>
-        )}
-
-        {activeMenu === 'evoting' && (
-          <div>
-            <h2>E-Voting</h2>
-            <p>Fitur e-voting akan segera hadir</p>
-          </div>
-        )}
-
-        {activeMenu === 'keuangan' && (
-          <div>
-            <h2>Manajemen Keuangan</h2>
-            <p>Fitur keuangan akan segera hadir</p>
-          </div>
-        )}
+      <main className="main-content">
+        {renderContent()}
       </main>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmedSubmit}
+        data={formData}
+      />
+
+      <GenerateSuratModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+      />
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        settings={settings}
+        onSettingsChange={setSettings}
+      />
     </div>
   )
 }
