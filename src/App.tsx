@@ -6,8 +6,7 @@ import ConfirmModal from './components/ConfirmModal'
 import SettingsModal from './components/SettingsModal'
 import { Settings, FileText, QrCode, LogOut } from 'lucide-react'
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzxTOyourdeploymentid/exec'
-
+const API_URL = 'https://script.google.com/macros/s/AKfycbwmNJahBX0HVmc-HDrTYxSHhn2eWACgkPEnO3b_OQWBFfqkACZDaBxppCfpdvY3_eJX/exec'
 function App() {
   const [activeMenu, setActiveMenu] = useState('home')
   const [formData, setFormData] = useState({
